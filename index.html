@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상환 시뮬레이터</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fafafa;color:#1a1a1a;font-family:'Pretendard',sans-serif;padding:20px 16px 40px;max-width:840px;margin:0 auto;font-size:14px;line-height:1.5}
+header{margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e0e0e0}
+header h1{font-size:20px;font-weight:800;letter-spacing:-0.3px}
+header p{color:#999;font-size:12px;margin-top:2px}
+.strip{display:flex;gap:1px;background:#e0e0e0;border-radius:8px;overflow:hidden;margin-bottom:20px}
+.strip .cell{flex:1;background:#fff;padding:12px 14px}
+.strip .cell .k{font-size:10px;color:#999;letter-spacing:0.5px}
+.strip .cell .v{font-size:17px;font-weight:800;margin-top:2px}
+.strip .cell .v.neg{color:#c0392b}.strip .cell .v.pos{color:#27ae60}.strip .cell .v.neu{color:#2c3e50}.strip .cell .v.warn{color:#e67e22}
+.tabs{display:flex;gap:0;border-bottom:2px solid #e0e0e0;margin-bottom:20px}
+.tab{padding:8px 18px;font-size:13px;font-weight:600;color:#999;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s}
+.tab:hover{color:#555}.tab.on{color:#1a1a1a;border-bottom-color:#1a1a1a}
+.debt{background:#fff;border:1px solid #e8e8e8;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.debt-top{padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.debt-top .fields{flex:1;display:grid;grid-template-columns:2.5fr 1fr 1fr 1fr;gap:8px}
+.field label{display:block;font-size:10px;color:#aaa;margin-bottom:2px;letter-spacing:0.3px}
+.field input,.field select{width:100%;border:1px solid #e0e0e0;border-radius:4px;padding:5px 8px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;transition:.15s}
+.field input:focus,.field select:focus{border-color:#888;background:#fff}
+.field .ni{font-weight:700;font-size:14px;border:none;background:transparent;padding:0;border-bottom:1px solid transparent}
+.field .ni:focus{border-bottom-color:#ccc}
+.btn-rm{background:none;border:none;color:#ccc;cursor:pointer;font-size:18px;padding:4px;line-height:1}.btn-rm:hover{color:#c0392b}
+.debt-result{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid #f0f0f0;background:#f8f8f8}
+.debt-result .rc{padding:8px 16px;border-right:1px solid #f0f0f0}.debt-result .rc:last-child{border-right:none}
+.rc .rk{font-size:10px;color:#aaa}.rc .rv{font-size:13px;font-weight:700;margin-top:1px}
+.rv.ok{color:#27ae60}.rv.bad{color:#c0392b}.rv.wn{color:#e67e22}
+.warn-msg{padding:6px 16px;background:#fdf2f2;color:#c0392b;font-size:11px;border-top:1px solid #f0e0e0}
+.st{padding:6px 16px;border-top:1px solid #f0f0f0;cursor:pointer;font-size:12px;color:#888;user-select:none;display:flex;align-items:center;gap:4px}.st:hover{background:#f5f5f5}
+.sr{font-size:10px;color:#e67e22;cursor:pointer;margin-left:8px}.sr:hover{text-decoration:underline}
+.sw{max-height:360px;overflow-y:auto;border-top:1px solid #eee}
+.sw table{width:100%;border-collapse:collapse;font-size:11px}
+.sw th{background:#f5f5f5;color:#999;font-weight:600;padding:5px 8px;text-align:right;position:sticky;top:0;z-index:1}
+.sw th:first-child,.sw td:first-child{text-align:left}
+.sw td{padding:4px 8px;text-align:right;border-bottom:1px solid #f5f5f5}
+.sw tr:hover{background:#fafafa}
+.sw input{width:72px;border:1px solid #e8e8e8;border-radius:3px;padding:2px 6px;font-size:11px;text-align:right;font-family:inherit;outline:none;background:#fff}
+.sw input:focus{border-color:#888}.sw input.t{color:#e67e22;font-weight:700;border-color:#f0c888}
+.ba{width:100%;padding:10px;border-radius:6px;background:#fff;border:1px dashed #ccc;color:#999;font-size:13px;font-weight:600;cursor:pointer}.ba:hover{border-color:#888;color:#555}
+.pn{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:20px}
+.pn h3{font-size:15px;font-weight:700;margin-bottom:2px}.pn .ds{color:#999;font-size:11px;margin-bottom:14px}
+.pg{display:grid;gap:10px;margin-bottom:14px}
+.rb{background:#f8f8f8;border-radius:6px;padding:14px;border:1px solid #eee}
+.rt{font-size:13px;font-weight:700;margin-bottom:10px}
+.cm{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px}
+.cm .sl{font-size:10px;color:#aaa;margin-bottom:4px;font-weight:600}
+.cm .rw{font-size:12px;color:#888;margin:2px 0}.cm .rw b{color:#1a1a1a}.cm .rw b.g{color:#27ae60}.cm .rw b.r{color:#c0392b}
+.sv{padding:8px 12px;background:#eafaf1;border:1px solid #c8e6c9;border-radius:4px;font-size:13px;font-weight:700;color:#27ae60}
+.scr{display:grid;grid-template-columns:50px 1fr 1fr 1fr 60px;gap:6px;padding:6px 0;border-bottom:1px solid #f0f0f0;align-items:center;font-size:11px}
+.scr button{background:#f0f0f0;border:1px solid #ddd;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;color:#555}.scr button:hover{background:#e0e0e0}
+.stc{background:#f8f8f8;border:1px solid #eee;border-radius:6px;padding:12px;margin-bottom:8px}
+.stc.bs{border-color:#c8e6c9;background:#f7fdf9}
+.sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.snn{font-size:13px;font-weight:700}.snd{font-size:10px;color:#999}
+.sg{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-top:6px}
+.sg .sk{font-size:10px;color:#aaa}.sg .sv2{font-size:14px;font-weight:800}
+.bdg{background:#eafaf1;color:#27ae60;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.tip{margin-top:12px;padding:10px 12px;background:#f5f5f5;border:1px solid #eee;border-radius:4px;font-size:11px;color:#888;line-height:1.6}
+@media(max-width:640px){.strip{flex-wrap:wrap}.strip .cell{flex:none;width:calc(50% - 0.5px)}.debt-top .fields{grid-template-columns:1fr 1fr}.debt-result{grid-template-columns:repeat(2,1fr)}.pg.g2,.pg.g3{grid-template-columns:1fr!important}.scr{grid-template-columns:1fr 1fr}.sg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>상환 시뮬레이터</h1><p>빚 항목을 편집하고, 월별 상환액을 조정해서 다양한 시나리오를 비교하세요.</p></header>
+<div class="strip" id="su"></div>
+<div class="tabs" id="tb"></div>
+<div id="ct"></div>
+<script>
+let D=[
+  {id:1,n:"신한카드 할부",b:2400000,r:15.6,m:300000,o:{},op:false},
+  {id:2,n:"전세자금대출 (국민은행)",b:142000000,r:3.5,m:800000,o:{},op:false},
+  {id:3,n:"마이너스통장 (카카오뱅크)",b:3200000,r:4.9,m:500000,o:{},op:false},
+],ni=4,T="main",lt="",la=0,sn="",sa=0,sr=5;
+
+function f(n){if(!n&&n!==0)return"0";if(Math.abs(n)>=1e8)return(n/1e8).toFixed(1)+"억";if(Math.abs(n)>=1e4)return Math.round(n/1e4).toLocaleString()+"만";return Math.round(n).toLocaleString()}
+function fN(n){return Math.round(n).toLocaleString()}
+function eD(m){if(!isFinite(m)||m>=600)return"불가";const d=new Date;d.setMonth(d.getMonth()+m);return d.getFullYear()+"년 "+(d.getMonth()+1)+"월"}
+function mL(m){const d=new Date;d.setMonth(d.getMonth()+m);return d.getFullYear()+"."+(d.getMonth()+1).toString().padStart(2,"0")}
+function du(m){if(!isFinite(m)||m>=600)return"-";return m>=12?Math.floor(m/12)+"년 "+m%12+"개월":m+"개월"}
+
+function S(b,r,mp,ov){
+  if(b<=0)return{mo:0,ti:0,tt:0,sc:[]};
+  if(mp<=0)return{mo:1/0,ti:0,tt:0,sc:[]};
+  const mr=r/100/12;let bl=b,m=0,ti=0,sc=[];
+  while(bl>0.5&&m<600){m++;const p=ov&&ov[m]!=null?ov[m]:mp;const i=bl*mr;
+    if(p<=i&&!(ov&&ov[m]!=null))return{mo:1/0,ti:0,tt:0,sc};
+    const pr=Math.min(bl,p-i);if(pr<=0){sc.push({m,bl,i:~~i,pr:0,p:~~p,ov:!!(ov&&ov[m]!=null)});continue}
+    bl=Math.max(0,bl-pr);ti+=i;sc.push({m,bl:~~bl,i:~~i,pr:~~pr,p:~~(i+pr),ov:!!(ov&&ov[m]!=null)});}
+  return{mo:m,ti:~~ti,tt:~~(ti+b),sc};
+}
+
+function R(){
+  const rs=D.map(d=>({...d,...S(d.b,d.r,d.m,d.o)}));
+  const tb=D.reduce((a,d)=>a+d.b,0),tm=D.reduce((a,d)=>a+d.m,0);
+  const ti=rs.reduce((a,r)=>a+(r.mo<600?r.ti:0),0);
+  const lm=Math.max(...rs.map(r=>r.mo<600?r.mo:0),0);
+
+  document.getElementById("su").innerHTML=[
+    {k:"총 잔액",v:f(tb)+"원",c:"neg"},{k:"월 상환",v:f(tm)+"원",c:"neu"},
+    {k:"이자 합계",v:f(ti)+"원",c:"warn"},{k:"완료 예상",v:eD(lm),c:"pos"}
+  ].map(i=>`<div class="cell"><div class="k">${i.k}</div><div class="v ${i.c}">${i.v}</div></div>`).join("");
+
+  document.getElementById("tb").innerHTML=[["main","빚 목록"],["lump","일시상환"],["scenario","빚 추가"],["compare","전략 비교"]]
+    .map(t=>`<div class="tab ${T===t[0]?"on":""}" onclick="T='${t[0]}';R()">${t[1]}</div>`).join("");
+
+  const el=document.getElementById("ct");
+
+  if(T==="main"){
+    el.innerHTML=rs.map(d=>{
+      const r=S(d.b,d.r,d.m,d.o),mi=Math.ceil(d.b*d.r/100/12),oc=Object.keys(d.o||{}).length;
+      return`<div class="debt">
+        <div class="debt-top"><div class="fields">
+          <div class="field"><label>이름</label><input class="ni" value="${d.n}" oninput="D.find(x=>x.id===${d.id}).n=this.value"></div>
+          <div class="field"><label>잔액</label><input type="number" step="100000" value="${d.b}" onchange="D.find(x=>x.id===${d.id}).b=+this.value;D.find(x=>x.id===${d.id}).o={};R()"></div>
+          <div class="field"><label>이자율 %</label><input type="number" step="0.1" value="${d.r}" onchange="D.find(x=>x.id===${d.id}).r=+this.value;D.find(x=>x.id===${d.id}).o={};R()"></div>
+          <div class="field"><label>월 상환액</label><input type="number" step="10000" value="${d.m}" onchange="D.find(x=>x.id===${d.id}).m=+this.value;D.find(x=>x.id===${d.id}).o={};R()"></div>
+        </div><button class="btn-rm" onclick="D=D.filter(x=>x.id!==${d.id});R()" title="삭제">&times;</button></div>
+        <div class="debt-result">
+          <div class="rc"><div class="rk">완료일</div><div class="rv ${r.mo<600?"ok":"bad"}">${eD(r.mo)}</div></div>
+          <div class="rc"><div class="rk">기간</div><div class="rv">${du(r.mo)}</div></div>
+          <div class="rc"><div class="rk">이자 합계</div><div class="rv wn">${r.mo<600?f(r.ti)+"원":"-"}</div></div>
+          <div class="rc"><div class="rk">총 상환액</div><div class="rv">${r.mo<600?f(r.tt)+"원":"-"}</div></div>
+        </div>
+        ${d.m>0&&d.m<=mi?`<div class="warn-msg">월 상환액(${fN(d.m)}원)이 월 이자(약 ${fN(mi)}원) 이하입니다.</div>`:""}
+        <div class="st" onclick="D.find(x=>x.id===${d.id}).op=!D.find(x=>x.id===${d.id}).op;R()">
+          ${d.op?"\u25BC":"\u25B6"} 월별 스케줄${oc?" ("+oc+"건 수동)":""}
+          ${oc?`<span class="sr" onclick="event.stopPropagation();D.find(x=>x.id===${d.id}).o={};R()">초기화</span>`:""}
+        </div>
+        ${d.op&&r.sc.length?`<div class="sw"><table>
+          <thead><tr><th>회차</th><th>날짜</th><th>상환액</th><th>이자</th><th>원금</th><th>잔액</th></tr></thead>
+          <tbody>${r.sc.map(s=>`<tr>
+            <td style="text-align:left;color:#aaa">${s.m}</td>
+            <td style="text-align:left;color:#999">${mL(s.m)}</td>
+            <td><input type="number" step="10000" value="${d.o[s.m]!=null?d.o[s.m]:d.m}" class="${s.ov?"t":""}" onchange="const v=+this.value,x=D.find(z=>z.id===${d.id});v===x.m?delete x.o[${s.m}]:x.o[${s.m}]=v;R()"></td>
+            <td style="color:#e67e22">${fN(s.i)}</td>
+            <td style="color:#27ae60">${fN(s.pr)}</td>
+            <td style="font-weight:600">${fN(s.bl)}</td>
+          </tr>`).join("")}</tbody></table></div>`:""}
+      </div>`;
+    }).join("")+`<button class="ba" onclick="D.push({id:ni++,n:'',b:0,r:5,m:100000,o:{},op:false});R()">+ 항목 추가</button>`;
+  }
+
+  else if(T==="lump"){
+    const tg=D.find(d=>d.n===lt);let h="";
+    if(tg&&la>0){
+      const bf=S(tg.b,tg.r,tg.m,tg.o),nb=Math.max(0,tg.b-la),af=S(nb,tg.r,tg.m);
+      h=`<div class="rb"><div class="rt">${tg.n}에 ${f(la)}원 일시상환 결과</div>
+        <div class="cm"><div><div class="sl">현재</div><div class="rw">완료 <b class="r">${eD(bf.mo)}</b></div><div class="rw">이자 <b class="r">${f(bf.ti)}원</b></div><div class="rw">기간 <b>${du(bf.mo)}</b></div></div>
+        <div><div class="sl">일시상환 후</div><div class="rw">잔액 <b class="g">${f(nb)}원</b></div><div class="rw">완료 <b class="g">${eD(af.mo)}</b></div><div class="rw">이자 <b class="g">${f(af.ti)}원</b></div></div></div>
+        <div class="sv">이자 절약 ${f(bf.ti-af.ti)}원 / 기간 단축 ${bf.mo-af.mo}개월</div></div>`;
+    }
+    el.innerHTML=`<div class="pn"><h3>일시상환 시뮬레이션</h3><p class="ds">목돈이 생겼을 때, 어느 빚에 넣으면 이자를 가장 아낄 수 있는지 비교합니다.</p>
+      <div class="pg g2" style="grid-template-columns:1fr 1fr">
+        <div class="field"><label>대상</label><select onchange="lt=this.value;R()"><option value="">선택</option>${D.map(d=>`<option ${lt===d.n?"selected":""} value="${d.n}">${d.n} (${f(d.b)}원)</option>`).join("")}</select></div>
+        <div class="field"><label>금액 (원)</label><input type="number" step="100000" value="${la}" onchange="la=+this.value;R()"></div>
+      </div>${h}</div>`;
+  }
+
+  else if(T==="scenario"){
+    let h="";
+    if(sa>0){
+      h=`<div class="rb"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div style="padding:10px;background:#fff;border:1px solid #eee;border-radius:4px"><div style="color:#aaa;font-size:10px">현재 총 빚</div><div style="font-size:18px;font-weight:900">${f(tb)}원</div></div>
+        <div style="padding:10px;background:#fdf2f2;border:1px solid #f0e0e0;border-radius:4px"><div style="color:#aaa;font-size:10px">추가 후</div><div style="font-size:18px;font-weight:900;color:#c0392b">${f(tb+sa)}원</div></div></div>
+        ${[6,12,24,36,48,60].map(m=>{const mp=Math.round(sa/m),r=S(sa,sr,mp);return`<div class="scr"><span style="color:#aaa">${m}개월</span><span>월 ${fN(mp)}원</span><span style="color:#e67e22">이자 ${f(r.ti)}원</span><span>총 ${f(r.tt)}원</span>
+          <button onclick="D.push({id:ni++,n:sn||'추가',b:sa,r:sr,m:${mp},o:{},op:false});T='main';R()">추가</button></div>`;}).join("")}</div>`;
+    }
+    el.innerHTML=`<div class="pn"><h3>빚 추가 시나리오</h3><p class="ds">새로운 대출이 생겼을 때 전체 상환 계획에 미치는 영향을 확인합니다.</p>
+      <div class="pg g3" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="field"><label>이름</label><input placeholder="예: 자동차 할부" value="${sn}" oninput="sn=this.value"></div>
+        <div class="field"><label>금액 (원)</label><input type="number" step="1000000" value="${sa}" onchange="sa=+this.value;R()"></div>
+        <div class="field"><label>이자율 %</label><input type="number" step="0.1" value="${sr}" onchange="sr=+this.value;R()"></div>
+      </div>${h}</div>`;
+  }
+
+  else if(T==="compare"){
+    const sd=D.filter(d=>d.b>0);
+    if(sd.length<2){el.innerHTML=`<div class="pn"><p style="color:#999">빚이 2개 이상일 때 비교할 수 있습니다.</p></div>`;return}
+    el.innerHTML=`<div class="pn"><h3>전략 비교</h3><p class="ds">같은 상환액으로 어디에 집중하면 이자를 가장 아낄 수 있는지 비교합니다.</p>
+      ${[{n:"고금리 우선 (눈덩이)",d:"이자율이 높은 빚부터 집중",o:[...sd].sort((a,b)=>b.r-a.r),bs:1},
+        {n:"소액 우선 (눈사람)",d:"잔액이 적은 빚부터 상환",o:[...sd].sort((a,b)=>a.b-b.b)},
+        {n:"균등 상환",d:"모든 빚에 동일 비율",o:sd}
+      ].map(s=>{let si=0,sm=0;s.o.forEach(d=>{const r=S(d.b,d.r,d.m,d.o);si+=r.mo<600?r.ti:0;sm=Math.max(sm,r.mo<600?r.mo:999)});
+        return`<div class="stc ${s.bs?"bs":""}"><div class="sh"><div><div class="snn">${s.n}</div><div class="snd">${s.d}</div></div>${s.bs?'<span class="bdg">추천</span>':""}</div>
+          <div class="sg"><div><div class="sk">순서</div><div style="font-size:11px;color:#666">${s.o.map(d=>d.n.length>8?d.n.slice(0,8)+"..":d.n).join(" → ")}</div></div>
+          <div><div class="sk">이자 합계</div><div class="sv2" style="color:#e67e22">${f(si)}원</div></div>
+          <div><div class="sk">완료</div><div class="sv2" style="color:${sm<600?"#27ae60":"#c0392b"}">${eD(sm)}</div></div></div></div>`;
+      }).join("")}
+      <div class="tip">고금리 빚을 먼저 갚으면 총 이자가 줄어듭니다. 반면, 소액 빚을 먼저 없애면 심리적 성취감으로 지속하기 쉽습니다.</div></div>`;
+  }
+}
+R();
+</script>
+</body>
+</html>
