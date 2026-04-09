@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>저축 시뮬레이터</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fafafa;color:#1a1a1a;font-family:'Pretendard',sans-serif;padding:20px 16px 40px;max-width:840px;margin:0 auto;font-size:14px;line-height:1.5}
+header{margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e0e0e0}
+header h1{font-size:20px;font-weight:800;letter-spacing:-0.3px}
+header p{color:#999;font-size:12px;margin-top:2px}
+.strip{display:flex;gap:1px;background:#e0e0e0;border-radius:8px;overflow:hidden;margin-bottom:20px}
+.strip .cell{flex:1;background:#fff;padding:12px 14px}
+.strip .cell .k{font-size:10px;color:#999;letter-spacing:0.5px}
+.strip .cell .v{font-size:17px;font-weight:800;margin-top:2px}
+.v.grn{color:#27ae60}.v.blu{color:#2980b9}.v.org{color:#e67e22}.v.neu{color:#2c3e50}
+.tabs{display:flex;gap:0;border-bottom:2px solid #e0e0e0;margin-bottom:20px}
+.tab{padding:8px 18px;font-size:13px;font-weight:600;color:#999;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s}
+.tab:hover{color:#555}.tab.on{color:#1a1a1a;border-bottom-color:#1a1a1a}
+.card{background:#fff;border:1px solid #e8e8e8;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.card-top{padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.card-top .fields{flex:1;display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:8px}
+.field label{display:block;font-size:10px;color:#aaa;margin-bottom:2px;letter-spacing:0.3px}
+.field input,.field select{width:100%;border:1px solid #e0e0e0;border-radius:4px;padding:5px 8px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;transition:.15s}
+.field input:focus,.field select:focus{border-color:#888;background:#fff}
+.field .ni{font-weight:700;font-size:14px;border:none;background:transparent;padding:0;border-bottom:1px solid transparent}
+.field .ni:focus{border-bottom-color:#ccc}
+.btn-rm{background:none;border:none;color:#ccc;cursor:pointer;font-size:18px;padding:4px;line-height:1}.btn-rm:hover{color:#c0392b}
+.card-result{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-top:1px solid #f0f0f0;background:#f8f8f8}
+.card-result .rc{padding:8px 16px;border-right:1px solid #f0f0f0}.card-result .rc:last-child{border-right:none}
+.rc .rk{font-size:10px;color:#aaa}.rc .rv{font-size:13px;font-weight:700;margin-top:1px}
+.rv.ok{color:#27ae60}.rv.wn{color:#e67e22}
+.pbar-wrap{padding:6px 16px 10px;border-top:1px solid #f0f0f0}
+.pbar-label{display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px}
+.pbar{height:6px;background:#eee;border-radius:3px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.type-tag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:600;margin-left:6px}
+.st{padding:6px 16px;border-top:1px solid #f0f0f0;cursor:pointer;font-size:12px;color:#888;user-select:none;display:flex;align-items:center;gap:4px}.st:hover{background:#f5f5f5}
+.sr{font-size:10px;color:#e67e22;cursor:pointer;margin-left:8px}.sr:hover{text-decoration:underline}
+.sw{max-height:360px;overflow-y:auto;border-top:1px solid #eee}
+.sw table{width:100%;border-collapse:collapse;font-size:11px}
+.sw th{background:#f5f5f5;color:#999;font-weight:600;padding:5px 8px;text-align:right;position:sticky;top:0;z-index:1}
+.sw th:first-child,.sw td:first-child{text-align:left}
+.sw td{padding:4px 8px;text-align:right;border-bottom:1px solid #f5f5f5}
+.sw tr:hover{background:#fafafa}
+.sw input{width:72px;border:1px solid #e8e8e8;border-radius:3px;padding:2px 6px;font-size:11px;text-align:right;font-family:inherit;outline:none;background:#fff}
+.sw input:focus{border-color:#888}.sw input.t{color:#2980b9;font-weight:700;border-color:#90caf9}
+.sw .goal-reached{background:#eafaf1}
+.ba{width:100%;padding:10px;border-radius:6px;background:#fff;border:1px dashed #ccc;color:#999;font-size:13px;font-weight:600;cursor:pointer}.ba:hover{border-color:#888;color:#555}
+.pn{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:20px}
+.pn h3{font-size:15px;font-weight:700;margin-bottom:2px}.pn .ds{color:#999;font-size:11px;margin-bottom:14px}
+.pg{display:grid;gap:10px;margin-bottom:14px}
+.rb{background:#f8f8f8;border-radius:6px;padding:14px;border:1px solid #eee}
+.rt{font-size:13px;font-weight:700;margin-bottom:10px}
+.ir-row{display:grid;grid-template-columns:80px 1fr 1fr 1fr 1fr;gap:6px;padding:6px 0;border-bottom:1px solid #f0f0f0;align-items:center;font-size:11px}
+.ir-head{font-weight:600;color:#999;border-bottom:2px solid #e0e0e0}
+.cm{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px}
+.cm .sl{font-size:10px;color:#aaa;margin-bottom:4px;font-weight:600}
+.cm .rw{font-size:12px;color:#888;margin:2px 0}.cm .rw b{color:#1a1a1a}.cm .rw b.g{color:#27ae60}
+.tip{margin-top:12px;padding:10px 12px;background:#f5f5f5;border:1px solid #eee;border-radius:4px;font-size:11px;color:#888;line-height:1.6}
+@media(max-width:640px){.strip{flex-wrap:wrap}.strip .cell{flex:none;width:calc(50% - 0.5px)}.card-top .fields{grid-template-columns:1fr 1fr}.card-result{grid-template-columns:repeat(2,1fr)}.pg.g2,.pg.g3,.pg.g4{grid-template-columns:1fr!important}.ir-row{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><h1>저축 시뮬레이터</h1><p>저축 목표, 초기 잔액, 월 저축액, 이자율을 조정해서 달성 시점을 시뮬레이션하세요.</p></header>
+<div class="strip" id="su"></div>
+<div class="tabs" id="tb"></div>
+<div id="ct"></div>
+<script>
+const TYPES={
+  "정기적금":{color:"#2980b9",bg:"#e8f4fd"},
+  "자유적금":{color:"#27ae60",bg:"#eafaf1"},
+  "비상금통장":{color:"#8e44ad",bg:"#f4ecf7"},
+  "예금":{color:"#e67e22",bg:"#fef5e7"},
+  "CMA":{color:"#2c3e50",bg:"#ebedef"}
+};
+let G=[
+  {id:1,n:"비상금 1천만원",goal:10000000,init:3200000,monthly:800000,rate:3.5,type:"비상금통장",o:{},op:false},
+  {id:2,n:"부부 여행 자금",goal:5000000,init:2700000,monthly:300000,rate:3.0,type:"정기적금",o:{},op:false},
+  {id:3,n:"남편 노트북 교체",goal:4000000,init:600000,monthly:600000,rate:2.5,type:"자유적금",o:{},op:false},
+],ni=4,T="main";
+let cmpGoal=10000000,cmpInit=0,cmpRate=3.5;
+
+function f(n){if(!n&&n!==0)return"0";if(Math.abs(n)>=1e8)return(n/1e8).toFixed(1)+"억";if(Math.abs(n)>=1e4)return Math.round(n/1e4).toLocaleString()+"만";return Math.round(n).toLocaleString()}
+function fN(n){return Math.round(n).toLocaleString()}
+function eD(m){if(!isFinite(m)||m>=600)return"달성 불가";if(m===0)return"이미 달성";const d=new Date;d.setMonth(d.getMonth()+m);return d.getFullYear()+"년 "+(d.getMonth()+1)+"월"}
+function mL(m){const d=new Date;d.setMonth(d.getMonth()+m);return d.getFullYear()+"."+(d.getMonth()+1).toString().padStart(2,"0")}
+function du(m){if(!isFinite(m)||m>=600)return"-";if(m===0)return"즉시";return m>=12?Math.floor(m/12)+"년 "+m%12+"개월":m+"개월"}
+
+function S(goal,init,monthly,rate,ov){
+  if(init>=goal)return{mo:0,ti:0,tt:init,sc:[]};
+  if(monthly<=0&&init<goal)return{mo:1/0,ti:0,tt:init,sc:[]};
+  const mr=rate/100/12;let bal=init,m=0,ti=0,sc=[];
+  while(bal<goal&&m<600){
+    m++;
+    const dep=ov&&ov[m]!=null?ov[m]:monthly;
+    const interest=bal*mr;
+    bal+=dep+interest;
+    ti+=interest;
+    const reached=bal>=goal;
+    sc.push({m,dep:Math.round(dep),interest:Math.round(interest),bal:Math.round(bal),reached,ov:!!(ov&&ov[m]!=null)});
+    if(reached)break;
+  }
+  return{mo:m>=600?Infinity:m,ti:Math.round(ti),tt:Math.round(bal),sc};
+}
+
+function R(){
+  const rs=G.map(g=>({...g,...S(g.goal,g.init,g.monthly,g.rate,g.o)}));
+  const tGoal=G.reduce((a,g)=>a+g.goal,0);
+  const tInit=G.reduce((a,g)=>a+g.init,0);
+  const tMon=G.reduce((a,g)=>a+g.monthly,0);
+  const tInt=rs.reduce((a,r)=>a+(r.mo<600?r.ti:0),0);
+  const lm=Math.max(...rs.map(r=>r.mo<600?r.mo:0),0);
+
+  document.getElementById("su").innerHTML=[
+    {k:"총 목표",v:f(tGoal)+"원",c:"blu"},{k:"현재 보유",v:f(tInit)+"원",c:"neu"},
+    {k:"월 저축",v:f(tMon)+"원",c:"grn"},{k:"전체 달성",v:eD(lm),c:"grn"}
+  ].map(i=>`<div class="cell"><div class="k">${i.k}</div><div class="v ${i.c}">${i.v}</div></div>`).join("");
+
+  document.getElementById("tb").innerHTML=[["main","목표 목록"],["compare","납입액/이자율 비교"],["interest","이자 계산기"]]
+    .map(t=>`<div class="tab ${T===t[0]?"on":""}" onclick="T='${t[0]}';R()">${t[1]}</div>`).join("");
+
+  const el=document.getElementById("ct");
+
+  if(T==="main"){
+    el.innerHTML=rs.map(g=>{
+      const r=S(g.goal,g.init,g.monthly,g.rate,g.o);
+      const pct=Math.min(100,Math.round(g.init/g.goal*100));
+      const finalPct=r.mo<600?100:pct;
+      const oc=Object.keys(g.o||{}).length;
+      const tc=TYPES[g.type]||TYPES["예금"];
+      return`<div class="card">
+        <div class="card-top"><div class="fields">
+          <div class="field"><label>목표명</label><input class="ni" value="${g.n}" oninput="G.find(x=>x.id===${g.id}).n=this.value"></div>
+          <div class="field"><label>목표 금액</label><input type="number" step="1000000" value="${g.goal}" onchange="G.find(x=>x.id===${g.id}).goal=+this.value;G.find(x=>x.id===${g.id}).o={};R()"></div>
+          <div class="field"><label>현재 잔액</label><input type="number" step="100000" value="${g.init}" onchange="G.find(x=>x.id===${g.id}).init=+this.value;G.find(x=>x.id===${g.id}).o={};R()"></div>
+          <div class="field"><label>월 저축액</label><input type="number" step="10000" value="${g.monthly}" onchange="G.find(x=>x.id===${g.id}).monthly=+this.value;G.find(x=>x.id===${g.id}).o={};R()"></div>
+          <div class="field"><label>연이자율 %</label><input type="number" step="0.1" value="${g.rate}" onchange="G.find(x=>x.id===${g.id}).rate=+this.value;G.find(x=>x.id===${g.id}).o={};R()"></div>
+          <div class="field"><label>유형</label><select onchange="G.find(x=>x.id===${g.id}).type=this.value;R()">
+            ${Object.keys(TYPES).map(t=>`<option ${g.type===t?"selected":""}>${t}</option>`).join("")}
+          </select></div>
+        </div><button class="btn-rm" onclick="G=G.filter(x=>x.id!==${g.id});R()" title="삭제">&times;</button></div>
+        <div class="card-result">
+          <div class="rc"><div class="rk">유형</div><div class="rv"><span class="type-tag" style="background:${tc.bg};color:${tc.color}">${g.type}</span></div></div>
+          <div class="rc"><div class="rk">달성일</div><div class="rv ${r.mo===0||r.mo<600?"ok":"wn"}">${eD(r.mo)}</div></div>
+          <div class="rc"><div class="rk">남은 기간</div><div class="rv">${du(r.mo)}</div></div>
+          <div class="rc"><div class="rk">이자 수령</div><div class="rv wn">${r.mo<600?"+"+f(r.ti)+"원":"-"}</div></div>
+          <div class="rc"><div class="rk">남은 금액</div><div class="rv">${f(Math.max(0,g.goal-g.init))}원</div></div>
+        </div>
+        <div class="pbar-wrap">
+          <div class="pbar-label"><span>${f(g.init)}원 / ${f(g.goal)}원</span><span>${pct}%</span></div>
+          <div class="pbar"><div class="pbar-fill" style="width:${pct}%;background:${tc.color}"></div></div>
+        </div>
+        <div class="st" onclick="G.find(x=>x.id===${g.id}).op=!G.find(x=>x.id===${g.id}).op;R()">
+          ${g.op?"\u25BC":"\u25B6"} 월별 저축 스케줄${oc?" ("+oc+"건 수동)":""}
+          ${oc?`<span class="sr" onclick="event.stopPropagation();G.find(x=>x.id===${g.id}).o={};R()">초기화</span>`:""}
+        </div>
+        ${g.op&&r.sc.length?`<div class="sw"><table>
+          <thead><tr><th>회차</th><th>날짜</th><th>저축액</th><th>이자</th><th>누적 잔액</th></tr></thead>
+          <tbody>${r.sc.map(s=>`<tr class="${s.reached?"goal-reached":""}">
+            <td style="text-align:left;color:#aaa">${s.m}</td>
+            <td style="text-align:left;color:#999">${mL(s.m)}</td>
+            <td><input type="number" step="10000" value="${g.o[s.m]!=null?g.o[s.m]:g.monthly}" class="${s.ov?"t":""}" onchange="const v=+this.value,x=G.find(z=>z.id===${g.id});v===x.monthly?delete x.o[${s.m}]:x.o[${s.m}]=v;R()"></td>
+            <td style="color:#e67e22">${fN(s.interest)}</td>
+            <td style="font-weight:600;color:${s.reached?"#27ae60":"#1a1a1a"}">${fN(s.bal)}${s.reached?" (달성)":""}</td>
+          </tr>`).join("")}</tbody></table></div>`:""}
+        ${g.op&&r.mo===0?`<div style="padding:8px 16px;border-top:1px solid #f0f0f0;font-size:12px;color:#27ae60">현재 잔액이 이미 목표를 달성했습니다.</div>`:""}
+      </div>`;
+    }).join("")+`<button class="ba" onclick="G.push({id:ni++,n:'',goal:0,init:0,monthly:100000,rate:2.0,type:'비상금통장',o:{},op:false});R()">+ 목표 추가</button>`;
+  }
+
+  else if(T==="compare"){
+    el.innerHTML=`<div class="pn"><h3>납입액 / 이자율 비교</h3><p class="ds">같은 목표에 대해 월 납입액과 이자율에 따른 달성 시점을 비교합니다.</p>
+      <div class="pg g3" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="field"><label>목표 금액</label><input type="number" step="1000000" value="${cmpGoal}" onchange="cmpGoal=+this.value;R()"></div>
+        <div class="field"><label>현재 잔액</label><input type="number" step="100000" value="${cmpInit}" onchange="cmpInit=+this.value;R()"></div>
+        <div class="field"><label>기준 이자율 %</label><input type="number" step="0.1" value="${cmpRate}" onchange="cmpRate=+this.value;R()"></div>
+      </div>
+      <div class="rb">
+        <div class="rt">월 납입액별 비교</div>
+        <div class="ir-row ir-head"><span>월 납입액</span><span>달성 기간</span><span>달성일</span><span>이자 수령</span><span>총 납입액</span></div>
+        ${[100000,200000,300000,500000,800000,1000000,1500000,2000000].filter(m=>cmpInit+m<=cmpGoal*2).map(m=>{
+          const r=S(cmpGoal,cmpInit,m,cmpRate,{});
+          return`<div class="ir-row">
+            <span style="font-weight:600">${f(m)}원</span>
+            <span>${du(r.mo)}</span>
+            <span style="color:#27ae60;font-weight:600">${eD(r.mo)}</span>
+            <span style="color:#e67e22">+${f(r.ti)}원</span>
+            <span>${f(r.tt-r.ti-cmpInit)}원</span>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="rb" style="margin-top:12px">
+        <div class="rt">이자율별 비교 (월 ${f(G[0]?.monthly||500000)}원, 초기잔액 ${f(cmpInit)}원 기준)</div>
+        <div class="ir-row ir-head"><span>이자율</span><span>달성 기간</span><span>달성일</span><span>이자 수령</span><span>이자 차이</span></div>
+        ${[0,0.5,1.0,2.0,2.5,3.0,3.5,4.0,5.0].map((rate,i,arr)=>{
+          const mp=G[0]?.monthly||500000;
+          const r=S(cmpGoal,cmpInit,mp,rate,{});
+          const base=S(cmpGoal,cmpInit,mp,arr[0],{});
+          return`<div class="ir-row">
+            <span style="font-weight:600">${rate}%${rate===0?" (이자없음)":""}</span>
+            <span>${du(r.mo)}</span>
+            <span style="color:#27ae60;font-weight:600">${eD(r.mo)}</span>
+            <span style="color:#e67e22">+${f(r.ti)}원</span>
+            <span style="color:#2980b9">${i>0?"+"+f(r.ti-base.ti)+"원":"-"}</span>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="tip">비상금 통장은 이자율이 낮아도(0.1~1%) 유동성이 핵심입니다. 적금은 이자율이 높지만 중도해지 시 불이익이 있으니 목적에 맞게 선택하세요.</div>
+    </div>`;
+  }
+
+  else if(T==="interest"){
+    el.innerHTML=`<div class="pn"><h3>이자 계산기</h3><p class="ds">원금, 기간, 이자율을 입력하면 단리/복리 이자와 세금을 계산합니다.</p>
+      <div class="pg g4" style="grid-template-columns:1fr 1fr 1fr 1fr">
+        <div class="field"><label>원금 (원)</label><input id="ic-p" type="number" step="1000000" value="10000000" onchange="cI()"></div>
+        <div class="field"><label>기간 (개월)</label><input id="ic-m" type="number" step="1" value="12" onchange="cI()"></div>
+        <div class="field"><label>연이자율 (%)</label><input id="ic-r" type="number" step="0.1" value="3.5" onchange="cI()"></div>
+        <div class="field"><label>세율 (%)</label><input id="ic-t" type="number" step="0.1" value="15.4" onchange="cI()"></div>
+      </div>
+      <div id="ic-res"></div>
+      <div class="tip" style="margin-top:12px">일반 이자소득세 15.4% (소득세14% + 지방세1.4%). 비과세 상품이나 세금우대(9.5%)는 세율을 직접 변경하세요.</div>
+    </div>`;
+    cI();
+  }
+}
+
+function cI(){
+  const p=+(document.getElementById("ic-p")?.value||0);
+  const m=+(document.getElementById("ic-m")?.value||0);
+  const r=+(document.getElementById("ic-r")?.value||0);
+  const tx=+(document.getElementById("ic-t")?.value||15.4);
+  if(!p||!m)return;
+  const si=p*r/100*(m/12);
+  const ci=p*Math.pow(1+r/100/12,m)-p;
+  const siT=si*(1-tx/100),ciT=ci*(1-tx/100);
+  document.getElementById("ic-res").innerHTML=`<div class="rb">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#2980b9">단리</div>
+        <div style="font-size:12px;color:#888;margin:4px 0">세전 이자: <b style="color:#1a1a1a">${fN(~~si)}원</b></div>
+        <div style="font-size:12px;color:#888;margin:4px 0">세금 (${tx}%): <b style="color:#c0392b">-${fN(~~(si*tx/100))}원</b></div>
+        <div style="font-size:12px;color:#888;margin:4px 0">세후 이자: <b style="color:#27ae60">${fN(~~siT)}원</b></div>
+        <div style="margin-top:10px;padding:8px;background:#eafaf1;border-radius:4px;font-size:14px;font-weight:800;color:#27ae60">수령액: ${fN(~~(p+siT))}원</div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#e67e22">복리 (월복리)</div>
+        <div style="font-size:12px;color:#888;margin:4px 0">세전 이자: <b style="color:#1a1a1a">${fN(~~ci)}원</b></div>
+        <div style="font-size:12px;color:#888;margin:4px 0">세금 (${tx}%): <b style="color:#c0392b">-${fN(~~(ci*tx/100))}원</b></div>
+        <div style="font-size:12px;color:#888;margin:4px 0">세후 이자: <b style="color:#27ae60">${fN(~~ciT)}원</b></div>
+        <div style="margin-top:10px;padding:8px;background:#eafaf1;border-radius:4px;font-size:14px;font-weight:800;color:#27ae60">수령액: ${fN(~~(p+ciT))}원</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:#999">복리 vs 단리 차이 (세후): <b style="color:#e67e22">+${fN(~~(ciT-siT))}원</b></div>
+  </div>`;
+}
+R();
+</script>
+</body>
+</html>
